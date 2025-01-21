@@ -13,8 +13,8 @@ import java.util.List;
 public class UserController {
     private final List<User> storageUser = new ArrayList<>();
     private int nextId = 0;
-    LocalDate currentDate = LocalDate.now();
-    private final static Logger log = LoggerFactory.getLogger(UserController.class);
+    private LocalDate currentDate = LocalDate.now();
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     /**
      * POST /users

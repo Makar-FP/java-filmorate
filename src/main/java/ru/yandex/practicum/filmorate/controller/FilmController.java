@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +12,9 @@ import java.util.List;
 @RestController
 public class FilmController {
     private final List<Film> storageFilm = new ArrayList<>();
-    LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
+    private LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
     private int nextId = 0;
-    private final static Logger log = LoggerFactory.getLogger(FilmController.class);
+    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
 
     /**
      * POST /films

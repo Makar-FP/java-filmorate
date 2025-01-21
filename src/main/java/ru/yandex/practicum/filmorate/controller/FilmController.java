@@ -13,7 +13,7 @@ import java.util.List;
 public class FilmController {
     private final List<Film> storageFilm = new ArrayList<>();
     private LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
-    private int nextId = 0;
+    private int nextId = 1;
     private static final Logger log = LoggerFactory.getLogger(FilmController.class);
 
     /**

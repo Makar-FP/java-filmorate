@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 public class UserController {
     private final List<User> storageUser = new ArrayList<>();
-    private int nextId = 0;
+    private int nextId = 1;
     private LocalDate currentDate = LocalDate.now();
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
@@ -94,6 +94,9 @@ public class UserController {
         if (user.getBirthday() == null || user.getBirthday().isAfter(currentDate)) {
             log.error("Birthday can't be in future");
             throw new IllegalArgumentException("Birthday can't be in future");
+        }
+        if (user.getName() == null || user.getName().isEmpty()) {
+            user.setName(user.getLogin());
         }
     }
 

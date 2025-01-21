@@ -64,12 +64,8 @@ public class FilmController {
      */
     @GetMapping
     public List<Film> getFilms() {
-        if (storageFilm == null) {
-            log.error("Film storage is empty");
-            throw new IllegalArgumentException("Film storage is empty");
-        } else {
-            return storageFilm;
-        }
+        log.info("Get films: {}", storageFilm.size());
+        return storageFilm;
     }
 
     /**

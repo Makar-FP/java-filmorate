@@ -63,12 +63,8 @@ public class UserController {
      */
     @GetMapping
     public List<User> getUsers() {
-        if (storageUser == null) {
-            log.error("User storage is empty");
-            throw new IllegalArgumentException("User storage is empty");
-        } else {
-            return storageUser;
-        }
+        log.info("Get users: {}", storageUser.size());
+        return storageUser;
     }
 
     /**

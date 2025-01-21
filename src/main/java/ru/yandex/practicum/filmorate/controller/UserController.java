@@ -40,7 +40,7 @@ public class UserController {
         try {
             validateUser(user);
             for (User existingUser : storageUser) {
-                if (existingUser.getId().equals(userId)) {
+                if (existingUser.getId() == userId) {
                     existingUser.setName(user.getName());
                     existingUser.setLogin(user.getLogin());
                     existingUser.setEmail(user.getEmail());

@@ -41,7 +41,7 @@ public class FilmController {
         try {
             validateFilm(film);
             for (Film existingFilm : storageFilm) {
-                if (existingFilm.getId().equals(filmId)) {
+                if ((existingFilm.getId() == filmId)) {
                     existingFilm.setName(film.getName());
                     existingFilm.setDescription(film.getDescription());
                     existingFilm.setReleaseDate(film.getReleaseDate());

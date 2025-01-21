@@ -36,11 +36,11 @@ public class UserController {
      * POST /users/
      */
     @PutMapping
-    public User updateUser(int userId, @RequestBody User user) {
+    public User updateUser(@RequestBody User user) {
         try {
             validateUser(user);
             for (User existingUser : storageUser) {
-                if (existingUser.getId() == userId) {
+                if (existingUser.getId() == user.getId()) {
                     existingUser.setName(user.getName());
                     existingUser.setLogin(user.getLogin());
                     existingUser.setEmail(user.getEmail());

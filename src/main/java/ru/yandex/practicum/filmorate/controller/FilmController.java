@@ -37,11 +37,11 @@ public class FilmController {
      * PUT /films/
      */
     @PutMapping
-    public Film updateFilm(int filmId, @RequestBody Film film) {
+    public Film updateFilm(@RequestBody Film film) {
         try {
             validateFilm(film);
             for (Film existingFilm : storageFilm) {
-                if ((existingFilm.getId() == filmId)) {
+                if ((existingFilm.getId() == film.getId())) {
                     existingFilm.setName(film.getName());
                     existingFilm.setDescription(film.getDescription());
                     existingFilm.setReleaseDate(film.getReleaseDate());

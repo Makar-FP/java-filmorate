@@ -33,10 +33,10 @@ public class UserController {
     }
 
     /**
-     * POST /users/{userId}
+     * POST /users/
      */
-    @PutMapping("/{userId}")
-    public User updateUser(@PathVariable("userId") int userId, @RequestBody User user) {
+    @PutMapping
+    public User updateUser(int userId, @RequestBody User user) {
         try {
             validateUser(user);
             for (User existingUser : storageUser) {

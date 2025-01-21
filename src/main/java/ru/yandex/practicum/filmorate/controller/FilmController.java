@@ -34,10 +34,10 @@ public class FilmController {
     }
 
     /**
-     * PUT /films/{filmId}
+     * PUT /films/
      */
-    @PutMapping("/{filmId}")
-    public Film updateFilm(@PathVariable("filmId") int filmId, @RequestBody Film film) {
+    @PutMapping
+    public Film updateFilm(int filmId, @RequestBody Film film) {
         try {
             validateFilm(film);
             for (Film existingFilm : storageFilm) {

@@ -50,7 +50,7 @@ public class FilmController {
                     return existingFilm;
                 }
             }
-            String errorMessage = "Film with id " + filmId + " was not found!";
+            String errorMessage = "Film with id " + film.getId() + " was not found!";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         } catch (IllegalArgumentException e) {

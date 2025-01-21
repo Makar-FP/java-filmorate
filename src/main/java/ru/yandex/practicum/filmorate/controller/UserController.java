@@ -49,7 +49,7 @@ public class UserController {
                     return existingUser;
                 }
             }
-            String errorMessage = "User with id " + userId + " was not found!";
+            String errorMessage = "User with id " + user.getId() + " was not found!";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         } catch (IllegalArgumentException e) {

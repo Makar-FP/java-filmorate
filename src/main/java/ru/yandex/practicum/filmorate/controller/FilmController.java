@@ -46,15 +46,15 @@ public class FilmController {
                     existingFilm.setDescription(film.getDescription());
                     existingFilm.setReleaseDate(film.getReleaseDate());
                     existingFilm.setDuration(film.getDuration());
-                    log.info("User updated: {}", existingFilm);
+                    log.info("Film updated: {}", existingFilm);
                     return existingFilm;
                 }
             }
-            String errorMessage = "User with id " + filmId + " was not found!";
+            String errorMessage = "Film with id " + filmId + " was not found!";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
         } catch (IllegalArgumentException e) {
-            log.error("Error updating user: {}", e.getMessage());
+            log.error("Error updating film: {}", e.getMessage());
             throw e;
         }
     }
@@ -64,7 +64,12 @@ public class FilmController {
      */
     @GetMapping
     public List<Film> getFilms() {
-        return storageFilm;
+        if (storageFilm == null) {
+            log.error("Film storage is empty");
+            throw new IllegalArgumentException("Film storage is empty");
+        } else {
+            return storageFilm;
+        }
     }
 
     /**
@@ -95,7 +100,7 @@ public class FilmController {
             log.error("Validation failed: The duration must be a positive number.");
             throw new IllegalArgumentException("The duration must be a positive number.");
         }
-        if (film.getDescription().length() > 5) {
+        if (film.getDescription().length() > 200) {
             log.error("Validation failed: String length can't exceed 200 characters.");
             throw new IllegalArgumentException("String length can't exceed 200 characters.");
         }

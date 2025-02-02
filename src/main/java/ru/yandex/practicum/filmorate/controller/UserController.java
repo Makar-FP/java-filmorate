@@ -1,35 +1,31 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import ru.yandex.practicum.filmorate.service.UserService;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+
+@RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/users")
 @RestController
 public class UserController {
-    private final List<User> storageUser = new ArrayList<>();
-    private int nextId = 1;
+    private final UserService userService;
     private LocalDate currentDate = LocalDate.now();
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     /**
      * POST /users
      */
     @PostMapping
     public User createUser(@RequestBody User user) {
-        try {
-            validateUser(user);
-            user.setId(getNextId());
-            storageUser.add(user);
-            return user;
-        } catch (IllegalArgumentException e) {
-            log.error("Error creating user: {}", e.getMessage());
-            throw e;
-        }
+        validateUser(user);
+        userService.createUser(user);
+        return user;
     }
 
     /**
@@ -37,25 +33,9 @@ public class UserController {
      */
     @PutMapping
     public User updateUser(@RequestBody User user) {
-        try {
-            validateUser(user);
-            for (User existingUser : storageUser) {
-                if (existingUser.getId() == user.getId()) {
-                    existingUser.setName(user.getName());
-                    existingUser.setLogin(user.getLogin());
-                    existingUser.setEmail(user.getEmail());
-                    existingUser.setBirthday(user.getBirthday());
-                    log.info("User updated: {}", existingUser);
-                    return existingUser;
-                }
-            }
-            String errorMessage = "User with id " + user.getId() + " was not found!";
-            log.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
-        } catch (IllegalArgumentException e) {
-            log.error("Error updating user: {}", e.getMessage());
-            throw e;
-        }
+        validateUser(user);
+        userService.updateUser(user);
+        return user;
     }
 
     /**
@@ -63,23 +43,47 @@ public class UserController {
      */
     @GetMapping
     public List<User> getUsers() {
-        log.info("Get users: {}", storageUser.size());
-        return storageUser;
+        return userService.getAll();
     }
 
     /**
      * GET users/{userId}
      */
     @GetMapping("/{userId}")
-    public User getUserById(@PathVariable("userId") int userId) {
-        for (User user : storageUser) {
-            if (user.getId() == userId) {
-                return user;
-            }
-        }
-        String errorMessage = "User with id " + userId + " was not found!";
-        log.error(errorMessage);
-        throw new IllegalArgumentException("User with id " + userId + " was not found!");
+    public User getUserById(@PathVariable("userId") long userId) {
+        return userService.getById(userId);
+    }
+
+    /**
+     * PUT films/{userId}/friends/{FriendId}
+     */
+    @PutMapping("/{userId}/friends/{FriendId}")
+    public User addFriend(@PathVariable("userId") long userId, @PathVariable("FriendId") long FriendId) {
+        return userService.addFriend(userId, FriendId);
+    }
+
+    /**
+     * DELETE films/{userId}/friends/{FriendId}
+     */
+    @DeleteMapping("/{userId}/friends/{FriendId}")
+    public User removeFriend(@PathVariable("userId") long userId, @PathVariable("FriendId") long FriendId) {
+        return userService.removeFriend(userId, FriendId);
+    }
+
+    /**
+     * GET films/{userId}/friends
+     */
+    @GetMapping("/{userId}/friends/")
+    public Set<Long> getFriends(@PathVariable("userId") long userId) {
+        return userService.getFriends(userId);
+    }
+
+    /**
+     * GET films/{userId}/common/{otherId}
+     */
+    @GetMapping("/{userId}/common/{otherId}")
+    public Set<Long> getFriends(@PathVariable("userId") long userId, @PathVariable("otherId") long otherId) {
+        return userService.getCommonFriends(userId, otherId);
     }
 
     private void validateUser(User user) {
@@ -98,9 +102,5 @@ public class UserController {
         if (user.getName() == null || user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
-    }
-
-    private int getNextId() {
-        return nextId++;
     }
 }

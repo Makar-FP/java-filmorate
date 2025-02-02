@@ -57,7 +57,7 @@ public class FilmController {
      * PUT films/{filmId}/like/{userId}
      */
     @PutMapping("/{filmId}/like/{userId}")
-    public Film setLikeFilm (@PathVariable("filmId") long filmId,@PathVariable("userId") long userId) {
+    public Film setLikeFilm(@PathVariable("filmId") long filmId,@PathVariable("userId") long userId) {
         return filmService.setLikeFilm(filmId, userId);
     }
 
@@ -65,7 +65,7 @@ public class FilmController {
      * DELETE films/{filmId}/like/{userId}
      */
     @DeleteMapping("/{filmId}/like/{userId}")
-    public Film removeLikeFilm (@PathVariable("filmId") long filmId,@PathVariable("userId") long userId) {
+    public Film removeLikeFilm(@PathVariable("filmId") long filmId,@PathVariable("userId") long userId) {
         return filmService.removeLikeFilm(filmId, userId);
     }
 

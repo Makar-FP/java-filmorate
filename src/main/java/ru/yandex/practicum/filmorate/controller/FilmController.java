@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -17,59 +19,61 @@ public class FilmController {
     private final FilmService filmService;
     private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
-    /**
-     * POST /films
-     */
     @PostMapping
-    public Film createFilm(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.createFilm(film);
-        return film;
+    public ResponseEntity<Film> createFilm(@RequestBody Film film) {
+        try {
+            validateFilm(film);
+            filmService.createFilm(film);
+            return ResponseEntity.status(HttpStatus.CREATED).body(film);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
-    /**
-     * PUT /films/
-     */
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.updateFilm(film);
-        return film;
+    public ResponseEntity<Film> updateFilm(@RequestBody Film film) {
+        try {
+            validateFilm(film);
+            filmService.updateFilm(film);
+            return ResponseEntity.ok(film);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
-    /**
-     * GET /films
-     */
     @GetMapping
     public List<Film> getFilms() {
         return filmService.getAll();
     }
 
-    /**
-     * GET films/{filmId}
-     */
     @GetMapping("/{filmId}")
-    public Film getFilmById(@PathVariable("filmId") long filmId) {
-        return filmService.getById(filmId);
+    public ResponseEntity<Film> getFilmById(@PathVariable("filmId") long filmId) {
+        Film film = filmService.getById(filmId);
+        if (film == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(film);
     }
 
-    /**
-     * PUT films/{filmId}/like/{userId}
-     */
     @PutMapping("/{filmId}/like/{userId}")
-    public Film setLikeFilm(@PathVariable("filmId") long filmId,@PathVariable("userId") long userId) {
-        return filmService.setLikeFilm(filmId, userId);
+    public ResponseEntity<Film> setLikeFilm(@PathVariable("filmId") long filmId, @PathVariable("userId") long userId) {
+        Film film = filmService.setLikeFilm(filmId, userId);
+        if (film == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(film);
     }
 
-    /**
-     * DELETE films/{filmId}/like/{userId}
-     */
     @DeleteMapping("/{filmId}/like/{userId}")
-    public Film removeLikeFilm(@PathVariable("filmId") long filmId,@PathVariable("userId") long userId) {
-        return filmService.removeLikeFilm(filmId, userId);
+    public ResponseEntity<Film> removeLikeFilm(@PathVariable("filmId") long filmId, @PathVariable("userId") long userId) {
+        Film film = filmService.removeLikeFilm(filmId, userId);
+        if (film == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(film);
     }
 
-    @GetMapping("/films/popular")
+    @GetMapping("/popular")
     public List<Film> getPopularFilms(@RequestParam(name = "count", defaultValue = "10") int count) {
         return filmService.getPopularFilms(count);
     }
@@ -91,5 +95,15 @@ public class FilmController {
             log.error("Validation failed: String length can't exceed 200 characters.");
             throw new IllegalArgumentException("String length can't exceed 200 characters.");
         }
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleValidationException(IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
     }
 }

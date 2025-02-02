@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -18,71 +20,67 @@ public class UserController {
     private final UserService userService;
     private LocalDate currentDate = LocalDate.now();
 
-    /**
-     * POST /users
-     */
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        validateUser(user);
-        userService.createUser(user);
-        return user;
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        try {
+            validateUser(user);
+            userService.createUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
-    /**
-     * POST /users/
-     */
     @PutMapping
-    public User updateUser(@RequestBody User user) {
-        validateUser(user);
-        userService.updateUser(user);
-        return user;
+    public ResponseEntity<User> updateUser(@RequestBody User user) {
+        try {
+            validateUser(user);
+            userService.updateUser(user);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
 
-    /**
-     * GET /users
-     */
     @GetMapping
     public List<User> getUsers() {
         return userService.getAll();
     }
 
-    /**
-     * GET users/{userId}
-     */
     @GetMapping("/{userId}")
-    public User getUserById(@PathVariable("userId") long userId) {
-        return userService.getById(userId);
+    public ResponseEntity<User> getUserById(@PathVariable("userId") long userId) {
+        User user = userService.getById(userId);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(user);
     }
 
-    /**
-     * PUT users/{userId}/friends/{friendId}
-     */
     @PutMapping("/{userId}/friends/{friendId}")
-    public User addFriend(@PathVariable("userId") long userId,@PathVariable("FriendId") long friendId) {
-        return userService.addFriend(userId, friendId);
+    public ResponseEntity<User> addFriend(@PathVariable("userId") long userId, @PathVariable("friendId") long friendId) {
+        User user = userService.addFriend(userId, friendId);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(user);
     }
 
-    /**
-     * DELETE users/{userId}/friends/{friendId}
-     */
     @DeleteMapping("/{userId}/friends/{friendId}")
-    public User removeFriend(@PathVariable("userId") long userId,@PathVariable("FriendId") long friendId) {
-        return userService.removeFriend(userId, friendId);
+    public ResponseEntity<User> removeFriend(@PathVariable("userId") long userId, @PathVariable("friendId") long friendId) {
+        User user = userService.removeFriend(userId, friendId);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(user);
     }
 
-    /**
-     * GET users/{userId}/friends
-     */
     @GetMapping("/{userId}/friends/")
     public Set<Long> getFriends(@PathVariable("userId") long userId) {
         return userService.getFriends(userId);
     }
 
-    /**
-     * GET users/{userId}/common/{otherId}
-     */
     @GetMapping("/{userId}/common/{otherId}")
-    public Set<Long> getFriends(@PathVariable("userId") long userId,@PathVariable("otherId") long otherId) {
+    public Set<Long> getCommonFriends(@PathVariable("userId") long userId, @PathVariable("otherId") long otherId) {
         return userService.getCommonFriends(userId, otherId);
     }
 
@@ -102,5 +100,15 @@ public class UserController {
         if (user.getName() == null || user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleValidationException(IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
     }
 }

@@ -31,17 +31,17 @@ public class UserService {
         userStorage.update(user);
     }
 
-    public User addFriend(long userId, long FriendId) {
+    public User addFriend(long userId, long friendId) {
         User user = userStorage.getById(userId);
-        User userFriend = userStorage.getById(FriendId);
+        User userFriend = userStorage.getById(friendId);
         userFriend.addFriend(userId);
-        user.addFriend(FriendId);
+        user.addFriend(friendId);
         return user;
     }
 
-    public User removeFriend(long userId, long FriendId) {
+    public User removeFriend(long userId, long friendId) {
         User user = userStorage.getById(userId);
-        user.removeFriend(FriendId);
+        user.removeFriend(friendId);
         return user;
     }
 

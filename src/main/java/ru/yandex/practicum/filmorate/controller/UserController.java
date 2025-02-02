@@ -55,23 +55,23 @@ public class UserController {
     }
 
     /**
-     * PUT films/{userId}/friends/{FriendId}
+     * PUT users/{userId}/friends/{friendId}
      */
-    @PutMapping("/{userId}/friends/{FriendId}")
-    public User addFriend(@PathVariable("userId") long userId,@PathVariable("FriendId") long FriendId) {
-        return userService.addFriend(userId, FriendId);
+    @PutMapping("/{userId}/friends/{friendId}")
+    public User addFriend(@PathVariable("userId") long userId,@PathVariable("FriendId") long friendId) {
+        return userService.addFriend(userId, friendId);
     }
 
     /**
-     * DELETE films/{userId}/friends/{FriendId}
+     * DELETE users/{userId}/friends/{friendId}
      */
-    @DeleteMapping("/{userId}/friends/{FriendId}")
-    public User removeFriend(@PathVariable("userId") long userId,@PathVariable("FriendId") long FriendId) {
-        return userService.removeFriend(userId, FriendId);
+    @DeleteMapping("/{userId}/friends/{friendId}")
+    public User removeFriend(@PathVariable("userId") long userId,@PathVariable("FriendId") long friendId) {
+        return userService.removeFriend(userId, friendId);
     }
 
     /**
-     * GET films/{userId}/friends
+     * GET users/{userId}/friends
      */
     @GetMapping("/{userId}/friends/")
     public Set<Long> getFriends(@PathVariable("userId") long userId) {
@@ -79,7 +79,7 @@ public class UserController {
     }
 
     /**
-     * GET films/{userId}/common/{otherId}
+     * GET users/{userId}/common/{otherId}
      */
     @GetMapping("/{userId}/common/{otherId}")
     public Set<Long> getFriends(@PathVariable("userId") long userId,@PathVariable("otherId") long otherId) {

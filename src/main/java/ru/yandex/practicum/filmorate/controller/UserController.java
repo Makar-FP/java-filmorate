@@ -47,8 +47,8 @@ public class UserController {
         return userService.getAll();
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<User> getUserById(@PathVariable("userId") long userId) {
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable("id") long userId) {
         User user = userService.getById(userId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -56,8 +56,8 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{userId}/friends/{friendId}")
-    public ResponseEntity<User> addFriend(@PathVariable("userId") long userId, @PathVariable("friendId") long friendId) {
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<User> addFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
         User user = userService.addFriend(userId, friendId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -65,8 +65,8 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @DeleteMapping("/{userId}/friends/{friendId}")
-    public ResponseEntity<User> removeFriend(@PathVariable("userId") long userId, @PathVariable("friendId") long friendId) {
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<User> removeFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
         User user = userService.removeFriend(userId, friendId);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -74,13 +74,13 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping("/{userId}/friends/")
-    public Set<Long> getFriends(@PathVariable("userId") long userId) {
+    @GetMapping("/{id}/friends/")
+    public Set<Long> getFriends(@PathVariable("id") long userId) {
         return userService.getFriends(userId);
     }
 
-    @GetMapping("/{userId}/common/{otherId}")
-    public Set<Long> getCommonFriends(@PathVariable("userId") long userId, @PathVariable("otherId") long otherId) {
+    @GetMapping("/{id}/common/{otherId}")
+    public Set<Long> getCommonFriends(@PathVariable("id") long userId, @PathVariable("otherId") long otherId) {
         return userService.getCommonFriends(userId, otherId);
     }
 

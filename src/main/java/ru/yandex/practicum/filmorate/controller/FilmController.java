@@ -46,8 +46,8 @@ public class FilmController {
         return filmService.getAll();
     }
 
-    @GetMapping("/{filmId}")
-    public ResponseEntity<Film> getFilmById(@PathVariable("filmId") long filmId) {
+    @GetMapping("/{id}")
+    public ResponseEntity<Film> getFilmById(@PathVariable("id") long filmId) {
         Film film = filmService.getById(filmId);
         if (film == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -55,8 +55,8 @@ public class FilmController {
         return ResponseEntity.ok(film);
     }
 
-    @PutMapping("/{filmId}/like/{userId}")
-    public ResponseEntity<Film> setLikeFilm(@PathVariable("filmId") long filmId, @PathVariable("userId") long userId) {
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<Film> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
         Film film = filmService.setLikeFilm(filmId, userId);
         if (film == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -64,8 +64,8 @@ public class FilmController {
         return ResponseEntity.ok(film);
     }
 
-    @DeleteMapping("/{filmId}/like/{userId}")
-    public ResponseEntity<Film> removeLikeFilm(@PathVariable("filmId") long filmId, @PathVariable("userId") long userId) {
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<Film> removeLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
         Film film = filmService.removeLikeFilm(filmId, userId);
         if (film == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);

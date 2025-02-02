@@ -15,7 +15,8 @@ import java.util.List;
 @RestController
 public class FilmController {
     private final FilmService filmService;
-    private LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
+    private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
+
     /**
      * POST /films
      */

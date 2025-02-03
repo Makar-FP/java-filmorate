@@ -1,55 +1,34 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Film.
  */
+@Getter
+@Setter
 public class Film {
-    private Integer id;
+    private Long id;
     private String name;
     private String description;
     private LocalDate releaseDate = LocalDate.of(1990, 1, 1);
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
-
+    private Set<Long> userLikeIds = new HashSet<>();
     private int duration;
 
-    public LocalDate getReleaseDate() {
-        return releaseDate;
+    public Set<Long> getUserLikeIds() {
+        return new HashSet<>(userLikeIds);
     }
 
-    public void setReleaseDate(LocalDate releaseDate) {
-        this.releaseDate = releaseDate;
+    public void setLikeByUserId(long userId) {
+        userLikeIds.add(userId);
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Integer getId() {
-        return id;
+    public boolean removeLikeByUserId(long userId) {
+        return userLikeIds.remove(userId);
     }
 }

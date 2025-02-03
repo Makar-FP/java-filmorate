@@ -1,54 +1,34 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User.
  */
+@Getter
+@Setter
 public class User {
-    private Integer id;
+    private Long id;
     private String name;
     private String login;
     private String email;
     LocalDate birthday = LocalDate.of(1990, 1, 1);
+    private Set<Long> friends = new HashSet<>();
 
-    public LocalDate getBirthday() {
-        return birthday;
+    public Set<Long> getFriends() {
+        return new HashSet<>(friends);
     }
 
-    public void setBirthday(LocalDate birthday) {
-        this.birthday = birthday;
+    public void addFriend(long userId) {
+        friends.add(userId);
     }
 
-    public String getLogin() {
-        return login;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public Integer getId() {
-        return id;
+    public void removeFriend(long userId) {
+        friends.remove(userId);
     }
 }

@@ -1,86 +1,94 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
+import java.time.LocalDate;
+import java.util.*;
+
+@RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/films")
 @RestController
 public class FilmController {
-    private final List<Film> storageFilm = new ArrayList<>();
-    private LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
-    private int nextId = 1;
-    private static final Logger log = LoggerFactory.getLogger(FilmController.class);
+    private final FilmService filmService;
+    private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
-    /**
-     * POST /films
-     */
     @PostMapping
-    public Film createFilm(@RequestBody Film film) {
+    public ResponseEntity<Film> createFilm(@RequestBody Film film) {
         try {
             validateFilm(film);
-            film.setId(getNextId());
-            storageFilm.add(film);
-            log.info("Film created: {}", film);
-            return film;
+            filmService.createFilm(film);
+            return ResponseEntity.status(HttpStatus.CREATED).body(film);
         } catch (IllegalArgumentException e) {
-            log.error("Error creating film: {}", e.getMessage());
-            throw e;
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(film);
         }
     }
 
-    /**
-     * PUT /films/
-     */
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
+    public ResponseEntity<Film> updateFilm(@RequestBody Film film) {
         try {
             validateFilm(film);
-            for (Film existingFilm : storageFilm) {
-                if ((existingFilm.getId() == film.getId())) {
-                    existingFilm.setName(film.getName());
-                    existingFilm.setDescription(film.getDescription());
-                    existingFilm.setReleaseDate(film.getReleaseDate());
-                    existingFilm.setDuration(film.getDuration());
-                    log.info("Film updated: {}", existingFilm);
-                    return existingFilm;
-                }
+            filmService.updateFilm(film);
+            if (filmService.getById(film.getId()) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(film);
             }
-            String errorMessage = "Film with id " + film.getId() + " was not found!";
-            log.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
+            return ResponseEntity.ok(film);
         } catch (IllegalArgumentException e) {
-            log.error("Error updating film: {}", e.getMessage());
-            throw e;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(film);
         }
     }
 
-    /**
-     * GET /films
-     */
     @GetMapping
     public List<Film> getFilms() {
-        log.info("Get films: {}", storageFilm.size());
-        return storageFilm;
+        return filmService.getAll();
     }
 
-    /**
-     * GET films/{filmId}
-     */
-    @GetMapping("/{filmId}")
-    public Film getFilmById(@PathVariable("filmId") int filmId) {
-        for (Film film : storageFilm) {
-            if (film.getId() == filmId) {
-                return film;
-            }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getFilmById(@PathVariable("id") long filmId) {
+        Film film = filmService.getById(filmId);
+        if (film != null) {
+            return ResponseEntity.ok(film);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Film not found"));
         }
-        String errorMessage = "Film with id " + filmId + " was not found!";
-        log.error(errorMessage);
-        throw new IllegalArgumentException("Film with id " + filmId + " was not found!");
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<?> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
+        boolean success = filmService.setLikeFilm(filmId, userId);
+
+        if (!success) { // Если фильма или пользователя нет, отдаём 404
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Film or User not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+
+        return ResponseEntity.ok().build(); // Лайк успешно добавлен
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<?> removeLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
+        Film film = filmService.removeLikeFilm(filmId, userId);
+
+        if (film == null) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Film with ID " + filmId + " not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+
+        return ResponseEntity.ok(film);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getPopularFilms(@RequestParam(name = "count", defaultValue = "10", required = false) int count) {
+        return filmService.getPopularFilms(count);
     }
 
     private void validateFilm(Film film) {
@@ -100,9 +108,5 @@ public class FilmController {
             log.error("Validation failed: String length can't exceed 200 characters.");
             throw new IllegalArgumentException("String length can't exceed 200 characters.");
         }
-    }
-
-    private int getNextId() {
-        return nextId++;
     }
 }

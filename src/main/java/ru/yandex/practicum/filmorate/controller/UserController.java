@@ -129,16 +129,4 @@ public class UserController {
             user.setName(user.getLogin());
         }
     }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleValidationException(IllegalArgumentException e) {
-        log.error("Validation error: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        log.error("Unexpected error: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
-    }
 }

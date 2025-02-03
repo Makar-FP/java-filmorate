@@ -21,7 +21,7 @@ public class FilmService {
     }
 
     @Autowired
-    public void UserService(UserStorage userStorage) {
+    public void userService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 

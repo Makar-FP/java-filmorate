@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
@@ -20,10 +21,14 @@ public class FilmController {
     private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
     @PostMapping
-    public Film createFilm(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.createFilm(film);
-        return film;
+    public ResponseEntity<Film> createFilm(@RequestBody Film film) {
+        try {
+            validateFilm(film);
+            filmService.createFilm(film);
+            return ResponseEntity.status(HttpStatus.CREATED).body(film);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(film);
+        }
     }
 
     @PutMapping
@@ -44,8 +49,13 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Film setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        return filmService.setLikeFilm(filmId, userId);
+    public ResponseEntity<Film> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
+        try {
+            Film film = filmService.setLikeFilm(filmId, userId);
+            return ResponseEntity.ok(film);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(filmService.getById(filmId));
+        }
     }
 
     @DeleteMapping("/{id}/like/{userId}")

@@ -17,21 +17,14 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User create(User entity) {
-        entity.setId(getNextId()); // Установка нового ID
-        storage.put(entity.getId(), entity); // Сохранение в HashMap
+        entity.setId(getNextId());
+        storage.put(entity.getId(), entity);
         return entity;
     }
 
     @Override
     public User getById(long id) {
-        User user = storage.get(id); // Получение пользователя по ID
-        if (user != null) {
-            return user;
-        } else {
-            String errorMessage = "User with id " + id + " was not found!";
-            log.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
-        }
+        return storage.get(id);
     }
 
     @Override
@@ -45,12 +38,8 @@ public class InMemoryUserStorage implements UserStorage {
         if (storage.containsKey(entity.getId())) {
             storage.put(entity.getId(), entity);
             log.info("User updated: {}", entity);
-            return entity;
-        } else {
-            String errorMessage = "User with id " + entity.getId() + " was not found!";
-            log.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
         }
+            return entity;
     }
 
     private long getNextId() {

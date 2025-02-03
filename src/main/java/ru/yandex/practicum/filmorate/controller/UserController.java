@@ -76,12 +76,9 @@ public class UserController {
     }
 
     @GetMapping("/{id}/friends")
-    public List<Map<String, Long>> getFriends(@PathVariable("id") long userId) {
-        List<Map<String, Long>> friends = userService.getFriends(userId)
-                .stream()
-                .map(friendId -> Map.of("id", friendId))
-                .collect(Collectors.toList());
-        return friends;
+    public ResponseEntity<List<Map<String, Long>>> getFriends(@PathVariable("id") long userId) {
+        List<Map<String, Long>> friends = userService.getFriends(userId);
+        return ResponseEntity.ok(friends);
     }
 
     @GetMapping("/{id}/common/{otherId}")

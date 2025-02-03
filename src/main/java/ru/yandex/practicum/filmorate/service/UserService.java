@@ -1,14 +1,14 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -51,9 +51,18 @@ public class UserService {
         return user;
     }
 
-    public Set<Long> getFriends(long userId) {
+    public List<Map<String, Long>> getFriends(long userId) {
         User user = userStorage.getById(userId);
-        return user.getFriends();
+
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+
+        return user.getFriends() != null
+                ? user.getFriends().stream()
+                .map(friendId -> Map.of("id", friendId))
+                .collect(Collectors.toList())
+                : Collections.emptyList();
     }
 
     public Set<Long> getCommonFriends(long userId, long otherId) {

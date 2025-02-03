@@ -17,18 +17,18 @@ public class Film {
     private String name;
     private String description;
     private LocalDate releaseDate = LocalDate.of(1990, 1, 1);
-    private Set<Long> likes = new HashSet<>();
+    private Set<Long> userLikeIds = new HashSet<>();
     private int duration;
 
-    public Set<Long> getLikes() {
-        return new HashSet<>(likes);
+    public Set<Long> getUserLikeIds() {
+        return new HashSet<>(userLikeIds);
     }
 
     public void setLikeByUserId(long userId) {
-        likes.add(userId);
+        userLikeIds.add(userId);
     }
 
     public void removeLikeByUserId(long userId) {
-        likes.remove(userId);
+        userLikeIds.remove(userId);
     }
 }

@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,7 +17,6 @@ import java.util.List;
 @RestController
 public class FilmController {
     private final FilmService filmService;
-    private final UserService userService;
     private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
     @PostMapping

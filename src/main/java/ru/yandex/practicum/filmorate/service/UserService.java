@@ -61,7 +61,6 @@ public class UserService {
         return user;
     }
 
-
     public List<Map<String, Long>> getFriends(long userId) {
         User user = userStorage.getById(userId);
 

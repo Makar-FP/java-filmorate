@@ -63,4 +63,7 @@ public class UserService {
         return common;
     }
 
+    public boolean exists(long userId) {
+        return userStorage.exists(userId);
+    }
 }

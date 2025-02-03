@@ -5,63 +5,60 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
 public class InMemoryUserStorage implements UserStorage {
-    private final List<User> storage = new ArrayList<>();
+    private final Map<Long, User> storage = new HashMap<>();
     private long nextId = 1;
 
-
     @Override
-    public User create(User entinty) {
-        entinty.setId(getNextId());
-        storage.add(entinty);
-        return entinty;
+    public User create(User entity) {
+        entity.setId(getNextId()); // Установка нового ID
+        storage.put(entity.getId(), entity); // Сохранение в HashMap
+        return entity;
     }
 
     @Override
     public User getById(long id) {
-        for (User entity : storage) {
-            if (entity.getId() == id) {
-                return entity;
-            }
+        User user = storage.get(id); // Получение пользователя по ID
+        if (user != null) {
+            return user;
+        } else {
+            String errorMessage = "User with id " + id + " was not found!";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
         }
-        String errorMessage = "Film with id " + id + " was not found!";
-        log.error(errorMessage);
-        throw new IllegalArgumentException("Film with id " + id + " was not found!");
     }
 
     @Override
     public List<User> getAll() {
-        log.info("Get films: {}", storage.size());
-        return storage;
+        log.info("Get users: {}", storage.size());
+        return new ArrayList<>(storage.values());
     }
 
     @Override
     public User update(User entity) {
-        try {
-            for (User existingUser : storage) {
-                if (existingUser.getId() == entity.getId()) {
-                    existingUser.setName(entity.getName());
-                    existingUser.setLogin(entity.getLogin());
-                    existingUser.setEmail(entity.getEmail());
-                    existingUser.setBirthday(entity.getBirthday());
-                    log.info("User updated: {}", existingUser);
-                    return existingUser;
-                }
-            }
+        if (storage.containsKey(entity.getId())) {
+            storage.put(entity.getId(), entity);
+            log.info("User updated: {}", entity);
+            return entity;
+        } else {
             String errorMessage = "User with id " + entity.getId() + " was not found!";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
-        } catch (IllegalArgumentException e) {
-            log.error("Error updating user: {}", e.getMessage());
-            throw e;
         }
     }
 
     private long getNextId() {
         return nextId++;
+    }
+
+    @Override
+    public boolean exists(long userId) {
+        return storage.containsKey(userId);
     }
 }

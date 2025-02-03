@@ -58,29 +58,35 @@ public class UserController {
 
     @PutMapping("/{id}/friends/{friendId}")
     public ResponseEntity<User> addFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
-        User user = userService.addFriend(userId, friendId);
-        if (user == null) {
+        if (!userService.exists(userId) || !userService.exists(friendId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+        User user = userService.addFriend(userId, friendId);
         return ResponseEntity.ok(user);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<User> removeFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
-        User user = userService.removeFriend(userId, friendId);
-        if (user == null) {
+        if (!userService.exists(userId) || !userService.exists(friendId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+        User user = userService.removeFriend(userId, friendId);
         return ResponseEntity.ok(user);
     }
 
     @GetMapping("/{id}/friends/")
     public Set<Long> getFriends(@PathVariable("id") long userId) {
+        if (!userService.exists(userId)) {
+            throw new IllegalArgumentException("User with id " + userId + " does not exist.");
+        }
         return userService.getFriends(userId);
     }
 
     @GetMapping("/{id}/common/{otherId}")
     public Set<Long> getCommonFriends(@PathVariable("id") long userId, @PathVariable("otherId") long otherId) {
+        if (!userService.exists(userId) || !userService.exists(otherId)) {
+            throw new IllegalArgumentException("One or both users do not exist.");
+        }
         return userService.getCommonFriends(userId, otherId);
     }
 
@@ -104,11 +110,13 @@ public class UserController {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleValidationException(IllegalArgumentException e) {
+        log.error("Validation error: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
+        log.error("Unexpected error: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
     }
 }

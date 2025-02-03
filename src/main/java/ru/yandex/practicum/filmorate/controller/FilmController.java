@@ -17,28 +17,21 @@ import java.util.List;
 @RestController
 public class FilmController {
     private final FilmService filmService;
+    private final FilmService userService;
     private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
     @PostMapping
-    public ResponseEntity<Film> createFilm(@RequestBody Film film) {
-        try {
-            validateFilm(film);
-            filmService.createFilm(film);
-            return ResponseEntity.status(HttpStatus.CREATED).body(film);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
+    public Film createFilm(@RequestBody Film film) {
+        validateFilm(film);
+        filmService.createFilm(film);
+        return film;
     }
 
     @PutMapping
-    public ResponseEntity<Film> updateFilm(@RequestBody Film film) {
-        try {
-            validateFilm(film);
-            filmService.updateFilm(film);
-            return ResponseEntity.ok(film);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
+    public Film updateFilm(@RequestBody Film film) {
+        validateFilm(film);
+        filmService.updateFilm(film);
+        return film;
     }
 
     @GetMapping
@@ -47,34 +40,38 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Film> getFilmById(@PathVariable("id") long filmId) {
-        Film film = filmService.getById(filmId);
-        if (film == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    public Film getFilmById(@PathVariable("id") long filmId) {
+        if (filmService.exists(filmId)) {
+            return filmService.getById(filmId);
+        } else {
+            throw new IllegalArgumentException("Film with id " + filmId + " does not exist.");
         }
-        return ResponseEntity.ok(film);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<Film> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        Film film = filmService.setLikeFilm(filmId, userId);
-        if (film == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    public Film setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
+        if (!filmService.exists(filmId)) {
+            throw new IllegalArgumentException("Film with id " + filmId + " does not exist.");
         }
-        return ResponseEntity.ok(film);
+        if (!userService.exists(userId)) {
+            throw new IllegalArgumentException("User with id " + userId + " does not exist.");
+        }
+        return filmService.setLikeFilm(filmId, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public ResponseEntity<Film> removeLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        Film film = filmService.removeLikeFilm(filmId, userId);
-        if (film == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    public Film removeLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
+        if (!filmService.exists(filmId)) {
+            throw new IllegalArgumentException("Film with id " + filmId + " does not exist.");
         }
-        return ResponseEntity.ok(film);
+        if (!userService.exists(userId)) {
+            throw new IllegalArgumentException("User with id " + userId + " does not exist.");
+        }
+        return filmService.removeLikeFilm(filmId, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(name = "count", defaultValue = "10") int count) {
+    public List<Film> getPopularFilms(@RequestParam(name = "count", defaultValue = "10", required = false) int count) {
         return filmService.getPopularFilms(count);
     }
 
@@ -99,11 +96,13 @@ public class FilmController {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleValidationException(IllegalArgumentException e) {
+        log.error("Validation error: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
+        log.error("Unexpected error: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
     }
 }

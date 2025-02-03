@@ -22,17 +22,25 @@ public class FilmController {
     private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
     @PostMapping
-    public Film createFilm(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.createFilm(film);
-        return film;
+    public ResponseEntity<?> createFilm(@RequestBody Film film) {
+        try {
+            validateFilm(film);
+            filmService.createFilm(film);
+            return ResponseEntity.status(HttpStatus.CREATED).body(film);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.updateFilm(film);
-        return film;
+    public ResponseEntity<?> updateFilm(@RequestBody Film film) {
+        try {
+            validateFilm(film);
+            filmService.updateFilm(film);
+            return ResponseEntity.ok(film);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @GetMapping
@@ -41,69 +49,25 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable("id") long filmId) {
+    public ResponseEntity<?> getFilmById(@PathVariable("id") long filmId) {
         if (filmService.exists(filmId)) {
-            return filmService.getById(filmId);
-        } else {
-            throw new IllegalArgumentException("Film with id " + filmId + " does not exist.");
+            return ResponseEntity.ok(filmService.getById(filmId));
         }
-    }
-
-    @PutMapping("/{id}/like/{userId}")
-    public Film setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        if (!filmService.exists(filmId)) {
-            throw new IllegalArgumentException("Film with id " + filmId + " does not exist.");
-        }
-        if (!userService.exists(userId)) {
-            throw new IllegalArgumentException("User with id " + userId + " does not exist.");
-        }
-        return filmService.setLikeFilm(filmId, userId);
-    }
-
-    @DeleteMapping("/{id}/like/{userId}")
-    public Film removeLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        if (!filmService.exists(filmId)) {
-            throw new IllegalArgumentException("Film with id " + filmId + " does not exist.");
-        }
-        if (!userService.exists(userId)) {
-            throw new IllegalArgumentException("User with id " + userId + " does not exist.");
-        }
-        return filmService.removeLikeFilm(filmId, userId);
-    }
-
-    @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(name = "count", defaultValue = "10", required = false) int count) {
-        return filmService.getPopularFilms(count);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Film with id " + filmId + " does not exist.");
     }
 
     private void validateFilm(Film film) {
         if (film.getName() == null || film.getName().isEmpty()) {
-            log.error("Validation failed: Film name can't be empty");
             throw new IllegalArgumentException("Film name can't be empty");
         }
         if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(thresholdDate)) {
-            log.error("Validation failed: Release date can't be earlier than December 28, 1895.");
             throw new IllegalArgumentException("Release date can't be earlier than December 28, 1895.");
         }
         if (film.getDuration() <= 0) {
-            log.error("Validation failed: The duration must be a positive number.");
             throw new IllegalArgumentException("The duration must be a positive number.");
         }
         if (film.getDescription().length() > 200) {
-            log.error("Validation failed: String length can't exceed 200 characters.");
             throw new IllegalArgumentException("String length can't exceed 200 characters.");
         }
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleValidationException(IllegalArgumentException e) {
-        log.error("Validation error: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        log.error("Unexpected error: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
     }
 }

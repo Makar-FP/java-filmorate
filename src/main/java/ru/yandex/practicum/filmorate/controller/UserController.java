@@ -4,13 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Indexed;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -27,7 +32,7 @@ public class UserController {
             userService.createUser(user);
             return ResponseEntity.status(HttpStatus.CREATED).body(user);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(user);
         }
     }
 
@@ -38,7 +43,7 @@ public class UserController {
             userService.updateUser(user);
             return ResponseEntity.ok(user);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(user);
         }
     }
 
@@ -51,43 +56,46 @@ public class UserController {
     public ResponseEntity<User> getUserById(@PathVariable("id") long userId) {
         User user = userService.getById(userId);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
     public ResponseEntity<User> addFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
-        if (!userService.exists(userId) || !userService.exists(friendId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        try {
+            User user = userService.addFriend(userId, friendId);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(userService.getById(userId));
         }
-        User user = userService.addFriend(userId, friendId);
-        return ResponseEntity.ok(user);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<User> removeFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
-        if (!userService.exists(userId) || !userService.exists(friendId)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
         User user = userService.removeFriend(userId, friendId);
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping("/{id}/friends/")
-    public Set<Long> getFriends(@PathVariable("id") long userId) {
-        if (!userService.exists(userId)) {
-            throw new IllegalArgumentException("User with id " + userId + " does not exist.");
-        }
-        return userService.getFriends(userId);
+    @GetMapping("/{id}/friends")
+    public List<Map<String, Long>> getFriends(@PathVariable("id") long userId) {
+        List<Map<String, Long>> friends = userService.getFriends(userId)
+                .stream()
+                .map(friendId -> Map.of("id", friendId))
+                .collect(Collectors.toList());
+        return friends;
     }
 
     @GetMapping("/{id}/common/{otherId}")
-    public Set<Long> getCommonFriends(@PathVariable("id") long userId, @PathVariable("otherId") long otherId) {
-        if (!userService.exists(userId) || !userService.exists(otherId)) {
-            throw new IllegalArgumentException("One or both users do not exist.");
+    public ResponseEntity<List<Map<String, Long>>> getCommonFriends(@PathVariable("id") long userId, @PathVariable("otherId") long otherId) {
+        Set<Long> commonFriends = userService.getCommonFriends(userId, otherId);
+        if (commonFriends.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
         }
-        return userService.getCommonFriends(userId, otherId);
+        List<Map<String, Long>> response = commonFriends.stream()
+                .map(friendId -> Map.of("id", friendId))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     private void validateUser(User user) {
@@ -111,7 +119,7 @@ public class UserController {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleValidationException(IllegalArgumentException e) {
         log.error("Validation error: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

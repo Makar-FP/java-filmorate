@@ -45,6 +45,8 @@ public class UserService {
 
     public User removeFriend(long userId, long friendId) {
         User user = userStorage.getById(userId);
+        User userFriend = userStorage.getById(friendId);
+        userFriend.removeFriend(userId);
         user.removeFriend(friendId);
         return user;
     }
@@ -65,9 +67,5 @@ public class UserService {
         common.retainAll(otherUser.getFriends());
 
         return common;
-    }
-
-    public boolean exists(long userId) {
-        return userStorage.exists(userId);
     }
 }

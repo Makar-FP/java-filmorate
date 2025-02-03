@@ -11,6 +11,4 @@ public interface Storage<T> {
     List<T> getAll();
 
     T update(T entity);
-
-    boolean exists(long id);
 }

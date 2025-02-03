@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,8 +16,7 @@ import java.util.List;
 @RequestMapping("/films")
 @RestController
 public class FilmController {
-    private final FilmService filmService;
-    private final UserService userService;
+    private final FilmService filmService;;
     private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
     @PostMapping
@@ -28,7 +26,7 @@ public class FilmController {
             filmService.createFilm(film);
             return ResponseEntity.status(HttpStatus.CREATED).body(film);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(film);
         }
     }
 
@@ -50,10 +48,7 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getFilmById(@PathVariable("id") long filmId) {
-        if (filmService.exists(filmId)) {
-            return ResponseEntity.ok(filmService.getById(filmId));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Film with id " + filmId + " does not exist.");
+        return ResponseEntity.ok(filmService.getById(filmId));
     }
 
     private void validateFilm(Film film) {

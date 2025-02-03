@@ -56,9 +56,4 @@ public class InMemoryUserStorage implements UserStorage {
     private long getNextId() {
         return nextId++;
     }
-
-    @Override
-    public boolean exists(long userId) {
-        return storage.containsKey(userId);
-    }
 }

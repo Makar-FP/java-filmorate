@@ -25,13 +25,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film getById(long id) {
         Film film = storage.get(id);
-        if (film != null) {
-            return film;
-        } else {
-            String errorMessage = "Film with id " + id + " was not found!";
-            log.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
-        }
+        return film;
     }
 
     @Override
@@ -45,20 +39,11 @@ public class InMemoryFilmStorage implements FilmStorage {
         if (storage.containsKey(entity.getId())) {
             storage.put(entity.getId(), entity);
             log.info("Film updated: {}", entity);
-            return entity;
-        } else {
-            String errorMessage = "Film with id " + entity.getId() + " was not found!";
-            log.error(errorMessage);
-            throw new IllegalArgumentException(errorMessage);
         }
+        return entity;
     }
 
     private long getNextId() {
         return nextId++;
-    }
-
-    @Override
-    public boolean exists(long filmId) {
-        return storage.containsKey(filmId);
     }
 }

@@ -37,9 +37,10 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film update(Film entity) {
         if (storage.containsKey(entity.getId())) {
             storage.put(entity.getId(), entity);
-            log.info("Film updated: {}", entity);
+            log.info("User updated: {}", entity);
+            return entity;
         }
-        return entity;
+        return null;
     }
 
     private long getNextId() {

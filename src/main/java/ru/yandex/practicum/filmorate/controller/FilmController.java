@@ -31,10 +31,17 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
-        validateFilm(film);
-        filmService.updateFilm(film);
-        return film;
+    public ResponseEntity<Film> updateFilm(@RequestBody Film film) {
+        try {
+            validateFilm(film);
+            filmService.updateFilm(film);
+            if (filmService.getById(film.getId()) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(film);
+            }
+            return ResponseEntity.ok(film);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(film);
+        }
     }
 
     @GetMapping
@@ -43,18 +50,19 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable("id") long filmId) {
-        return filmService.getById(filmId);
+    public ResponseEntity<Film> getFilmById(@PathVariable("id") long filmId) {
+        Film film = filmService.getById(filmId);
+        if (film == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(film);
+        }
     }
 
     @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Film> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        try {
-            Film film = filmService.setLikeFilm(filmId, userId);
-            return ResponseEntity.ok(film);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(filmService.getById(filmId));
-        }
+        Film film = filmService.setLikeFilm(filmId, userId);
+        return ResponseEntity.ok(film);
     }
 
     @DeleteMapping("/{id}/like/{userId}")

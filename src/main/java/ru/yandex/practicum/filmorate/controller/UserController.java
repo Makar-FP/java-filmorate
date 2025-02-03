@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -39,6 +40,9 @@ public class UserController {
         try {
             validateUser(user);
             userService.updateUser(user);
+            if (userService.getById(user.getId()) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(user);  // Возвращаем 404, если пользователь не найден
+            }
             return ResponseEntity.ok(user);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(user);
@@ -70,27 +74,43 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User> removeFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
-        User user = userService.removeFriend(userId, friendId);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<?> removeFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
+        try {
+            User user = userService.removeFriend(userId, friendId);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User or Friend not found"));
+            }
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}/friends")
-    public ResponseEntity<List<Map<String, Long>>> getFriends(@PathVariable("id") long userId) {
-        List<Map<String, Long>> friends = userService.getFriends(userId);
-        return ResponseEntity.ok(friends);
+    public ResponseEntity<?> getFriends(@PathVariable("id") long userId) {
+        try {
+            List<Map<String, Long>> friends = userService.getFriends(userId);
+            return ResponseEntity.ok(friends);
+        } catch (ResponseStatusException e) {
+            // Возвращаем JSON с сообщением об ошибке
+            Map<String, String> errorResponse = Map.of("error", e.getReason());
+            return ResponseEntity.status(e.getStatusCode()).body(errorResponse);
+        }
     }
 
-    @GetMapping("/{id}/common/{otherId}")
+    @GetMapping("/{id}/friends/common/{otherId}")
     public ResponseEntity<List<Map<String, Long>>> getCommonFriends(@PathVariable("id") long userId, @PathVariable("otherId") long otherId) {
+
         Set<Long> commonFriends = userService.getCommonFriends(userId, otherId);
-        if (commonFriends.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
-        }
+        System.out.println("Общие друзья: " + commonFriends); // Лог для проверки
+
         List<Map<String, Long>> response = commonFriends.stream()
                 .map(friendId -> Map.of("id", friendId))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(response);
+
+        return ResponseEntity.ok(response); // Обязательно возвращаем 200
     }
 
     private void validateUser(User user) {

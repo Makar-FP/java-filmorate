@@ -38,8 +38,9 @@ public class InMemoryUserStorage implements UserStorage {
         if (storage.containsKey(entity.getId())) {
             storage.put(entity.getId(), entity);
             log.info("User updated: {}", entity);
-        }
             return entity;
+        }
+        return null;
     }
 
     private long getNextId() {

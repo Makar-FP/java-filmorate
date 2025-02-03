@@ -6,15 +6,23 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
+    private UserStorage userStorage;
 
     @Autowired
     public FilmService(FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
+    }
+
+    @Autowired
+    public void UserService(UserStorage userStorage) {
+        this.userStorage = userStorage;
     }
 
     public void createFilm(Film film) {
@@ -33,15 +41,29 @@ public class FilmService {
         filmStorage.update(film);
     }
 
-    public Film setLikeFilm(long filmId, long userId) {
+    public boolean setLikeFilm(long filmId, long userId) {
         Film film = filmStorage.getById(filmId);
+        User user = userStorage.getById(userId);
+
+        if (film == null || user == null) {
+            return false;
+        }
+
         film.setLikeByUserId(userId);
-        return film;
+        return true;
     }
 
     public Film removeLikeFilm(long filmId, long userId) {
         Film film = filmStorage.getById(filmId);
-        film.removeLikeByUserId(userId);
+
+        if (film == null) {
+            return null;
+        }
+
+        if (!film.removeLikeByUserId(userId)) {
+            return null;
+        }
+
         return film;
     }
 

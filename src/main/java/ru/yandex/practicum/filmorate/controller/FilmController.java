@@ -9,7 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -50,24 +50,40 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Film> getFilmById(@PathVariable("id") long filmId) {
+    public ResponseEntity<?> getFilmById(@PathVariable("id") long filmId) {
         Film film = filmService.getById(filmId);
-        if (film == null) {
-            return ResponseEntity.notFound().build();
-        } else {
+        if (film != null) {
             return ResponseEntity.ok(film);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Film not found"));
         }
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<Film> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        Film film = filmService.setLikeFilm(filmId, userId);
-        return ResponseEntity.ok(film);
+    public ResponseEntity<?> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
+        boolean success = filmService.setLikeFilm(filmId, userId);
+
+        if (!success) { // Если фильма или пользователя нет, отдаём 404
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Film or User not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+
+        return ResponseEntity.ok().build(); // Лайк успешно добавлен
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Film removeLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
-        return filmService.removeLikeFilm(filmId, userId);
+    public ResponseEntity<?> removeLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
+        Film film = filmService.removeLikeFilm(filmId, userId);
+
+        if (film == null) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Film with ID " + filmId + " not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+
+        return ResponseEntity.ok(film);
     }
 
     @GetMapping("/popular")

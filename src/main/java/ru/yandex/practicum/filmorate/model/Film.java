@@ -28,7 +28,7 @@ public class Film {
         userLikeIds.add(userId);
     }
 
-    public void removeLikeByUserId(long userId) {
-        userLikeIds.remove(userId);
+    public boolean removeLikeByUserId(long userId) {
+        return userLikeIds.remove(userId);
     }
 }

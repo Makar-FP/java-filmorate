@@ -5,14 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -35,16 +34,18 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<User> updateUser(@RequestBody User user) {
+    public ResponseEntity<?> updateUser(@RequestBody User user) {
+        if (userService.getById(user.getId()) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found"));
+        }
         try {
             validateUser(user);
             userService.updateUser(user);
-            if (userService.getById(user.getId()) == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(user);  // Возвращаем 404, если пользователь не найден
-            }
             return ResponseEntity.ok(user);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(user);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -54,62 +55,55 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable("id") long userId) {
+    public ResponseEntity<?> getUserById(@PathVariable("id") long userId) {
         User user = userService.getById(userId);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found"));
         }
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User> addFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
-        try {
-            User user = userService.addFriend(userId, friendId);
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(userService.getById(userId));
+    public ResponseEntity<?> addFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
+        if (userService.getById(userId) == null || userService.getById(friendId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User or Friend not found"));
         }
+        userService.addFriend(userId, friendId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204 No Content
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<?> removeFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
-        try {
-            User user = userService.removeFriend(userId, friendId);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "User or Friend not found"));
-            }
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+        if (userService.getById(userId) == null || userService.getById(friendId) == null) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204 No Content вместо 200 OK
         }
+        userService.removeFriend(userId, friendId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @GetMapping("/{id}/friends")
-    public ResponseEntity<?> getFriends(@PathVariable("id") long userId) {
-        try {
-            List<Map<String, Long>> friends = userService.getFriends(userId);
-            return ResponseEntity.ok(friends);
-        } catch (ResponseStatusException e) {
-            // Возвращаем JSON с сообщением об ошибке
-            Map<String, String> errorResponse = Map.of("error", e.getReason());
-            return ResponseEntity.status(e.getStatusCode()).body(errorResponse);
+    public ResponseEntity<List<User>> getFriends(@PathVariable("id") long userId) {
+        User user = userService.getById(userId);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+        Collection<User> friends = userService.getUserFriends(userId);
+        return ResponseEntity.ok(List.copyOf(friends));
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public ResponseEntity<List<Map<String, Long>>> getCommonFriends(@PathVariable("id") long userId, @PathVariable("otherId") long otherId) {
-
-        Set<Long> commonFriends = userService.getCommonFriends(userId, otherId);
-        System.out.println("Общие друзья: " + commonFriends); // Лог для проверки
-
+    public ResponseEntity<?> getCommonFriends(@PathVariable("id") long userId, @PathVariable("otherId") long otherId) {
+        if (userService.getById(userId) == null || userService.getById(otherId) == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User(s) not found"));
+        }
+        Collection<User> commonFriends = userService.getCommonFriends(userId, otherId);
         List<Map<String, Long>> response = commonFriends.stream()
-                .map(friendId -> Map.of("id", friendId))
+                .map(user -> Map.of("id", user.getId()))
                 .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response); // Обязательно возвращаем 200
+        return ResponseEntity.ok(response);
     }
 
     private void validateUser(User user) {
@@ -118,12 +112,12 @@ public class UserController {
             throw new IllegalArgumentException("Login can't be empty and contain spaces");
         }
         if (user.getEmail() == null || user.getEmail().isEmpty() || !user.getEmail().contains("@")) {
-            log.error("Login can't be empty and must contain @");
-            throw new IllegalArgumentException("Login can't be empty and must contain @");
+            log.error("Validation failed: Email can't be empty and must contain @");
+            throw new IllegalArgumentException("Email can't be empty and must contain @");
         }
         if (user.getBirthday() == null || user.getBirthday().isAfter(currentDate)) {
-            log.error("Birthday can't be in future");
-            throw new IllegalArgumentException("Birthday can't be in future");
+            log.error("Validation failed: Birthday can't be in the future");
+            throw new IllegalArgumentException("Birthday can't be in the future");
         }
         if (user.getName() == null || user.getName().isEmpty()) {
             user.setName(user.getLogin());

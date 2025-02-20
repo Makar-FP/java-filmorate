@@ -35,57 +35,19 @@ public class UserService {
         userStorage.update(user);
     }
 
-    public User addFriend(long userId, long friendId) {
-        User user = userStorage.getById(userId);
-        User userFriend = userStorage.getById(friendId);
-
-        if (user == null || userFriend == null) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        userFriend.addFriend(userId);
-        user.addFriend(friendId);
-        return user;
+    public void addFriend(long userId, long friendId) {
+        userStorage.addFriend(userId, friendId);
     }
 
-    public User removeFriend(long userId, long friendId) {
-        User user = userStorage.getById(userId);
-        User userFriend = userStorage.getById(friendId);
-
-        if (user == null || userFriend == null) {
-            return null;
-        }
-
-        userFriend.removeFriend(userId);
-        user.removeFriend(friendId);
-        return user;
+    public void removeFriend(long userId, long friendId) {
+        userStorage.removeFriend(userId, friendId);
     }
 
-    public List<Map<String, Long>> getFriends(long userId) {
-        User user = userStorage.getById(userId);
-
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-
-        return user.getFriends() != null
-                ? user.getFriends().stream()
-                .map(friendId -> Map.of("id", friendId))
-                .collect(Collectors.toList())
-                : Collections.emptyList();
+    public Collection<User> getUserFriends(long userId) {
+        return userStorage.getUserFriends(userId);
     }
 
-    public Set<Long> getCommonFriends(long userId, long otherId) {
-        User user = userStorage.getById(userId);
-        User otherUser = userStorage.getById(otherId);
-
-        if (user == null || otherUser == null) {
-            return Collections.emptySet();
-        }
-
-        Set<Long> common = new HashSet<>(user.getFriends());
-        common.retainAll(otherUser.getFriends());
-
-        return common;
+    public Collection<User> getCommonFriends(long userId, long otherId) {
+        return userStorage.getCommonFriends(userId, otherId);
     }
 }

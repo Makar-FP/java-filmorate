@@ -71,13 +71,13 @@ public class UserController {
                     .body(Map.of("error", "User or Friend not found"));
         }
         userService.addFriend(userId, friendId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204 No Content
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public ResponseEntity<?> removeFriend(@PathVariable("id") long userId, @PathVariable("friendId") long friendId) {
         if (userService.getById(userId) == null || userService.getById(friendId) == null) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // 204 No Content вместо 200 OK
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
         userService.removeFriend(userId, friendId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

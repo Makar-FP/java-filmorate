@@ -1,7 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import jakarta.persistence.EntityNotFoundException;
-import net.sf.jsqlparser.util.validation.metadata.DatabaseException;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;

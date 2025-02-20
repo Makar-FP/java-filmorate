@@ -164,7 +164,7 @@ public class DbFilmStorage implements FilmStorage {
     public List<Film> getAll() {
         List<Film> films = jdbcTemplate.query(GET_ALL, getFilmMapper());
         for (Film film : films) {
-            film.setGenres(new LinkedHashSet<>(getGenresByFilmId(film.getId()))); // Загружаем жанры
+            film.setGenres(new LinkedHashSet<>(getGenresByFilmId(film.getId())));
         }
         return films;
     }

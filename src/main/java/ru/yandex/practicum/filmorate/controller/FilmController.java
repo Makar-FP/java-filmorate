@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
@@ -67,13 +64,13 @@ public class FilmController {
     public ResponseEntity<?> setLikeFilm(@PathVariable("id") long filmId, @PathVariable("userId") long userId) {
         boolean success = filmService.setLikeFilm(filmId, userId);
 
-        if (!success) { // Если фильма или пользователя нет, отдаём 404
+        if (!success) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "Film or User not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
         }
 
-        return ResponseEntity.ok().build(); // Лайк успешно добавлен
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}/like/{userId}")

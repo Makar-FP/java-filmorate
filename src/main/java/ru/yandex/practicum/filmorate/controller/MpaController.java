@@ -9,32 +9,24 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.MpaService;
 
 import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/mpa")
 @RestController
 public class MpaController {
-    private final FilmService filmService;
+    private final MpaService mpaService;
 
     @GetMapping
-    public ResponseEntity<List<Mpa>> getAllMpa() {
-        List<Mpa> mpaList = filmService.findAllMpa();
-        return ResponseEntity.ok(mpaList);
+    public List<Mpa> getAllMpa() {
+        return mpaService.findAllMpa();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMpaById(@PathVariable("id") int id) {
-        Mpa mpa = filmService.findMpa(id);
-        if (mpa != null) {
-            return ResponseEntity.ok(mpa);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "MPA rating not found"));
-        }
+    public Mpa getMpaById(@PathVariable("id") int id) {
+        return mpaService.findMpa(id);
     }
 }

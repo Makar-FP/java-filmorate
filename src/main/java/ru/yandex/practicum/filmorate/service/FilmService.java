@@ -1,64 +1,99 @@
 package ru.yandex.practicum.filmorate.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final LocalDate thresholdDate = LocalDate.of(1895, 12, 28);
 
     @Autowired
     public FilmService(FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
     }
 
-    public void createFilm(Film film) {
-        filmStorage.create(film);
+    public Film createFilm(Film film) {
+        validateFilm(film);
+        return filmStorage.create(film);
     }
 
     public Film getById(long id) {
-        return filmStorage.getById(id);
+        Film film = filmStorage.getById(id);
+        if (film == null) {
+            throw new NotFoundException("Film with ID " + id + " not found");
+        }
+        return film;
     }
 
     public List<Film> getAll() {
         return filmStorage.getAll();
     }
 
-    public void updateFilm(Film film) {
-        filmStorage.update(film);
+    public Film updateFilm(Film film) {
+        validateFilm(film);
+        if (filmStorage.getById(film.getId()) == null) {
+            throw new NotFoundException("Film with ID " + film.getId() + " not found");
+        }
+        return filmStorage.update(film);
     }
 
-    public boolean setLikeFilm(long filmId, long userId) {
-        return filmStorage.setLikeFilm(filmId, userId);
+    public void setLikeFilm(long filmId, long userId) {
+        if (!filmStorage.setLikeFilm(filmId, userId)) {
+            throw new NotFoundException("Film or User not found");
+        }
     }
 
     public Film removeLikeFilm(long filmId, long userId) {
-        return filmStorage.removeLikeFilm(filmId, userId);
+        Film film = filmStorage.removeLikeFilm(filmId, userId);
+        if (film == null) {
+            throw new NotFoundException("Film with ID " + filmId + " not found");
+        }
+        return film;
     }
 
     public List<Film> getPopularFilms(int count) {
         return filmStorage.getPopularFilms(count);
     }
 
-    public List<Genre> getAllGenres() {
-        return filmStorage.getAllGenres();
-    }
+    private void validateFilm(Film film) {
+        if (film.getName() == null || film.getName().trim().isEmpty()) {
+            throw new ValidationException("Film name can't be empty");
+        }
+        if (film.getReleaseDate() == null || film.getReleaseDate().isBefore(thresholdDate)) {
+            throw new ValidationException("Release date can't be earlier than December 28, 1895.");
+        }
+        if (film.getDuration() <= 0) {
+            throw new ValidationException("The duration must be a positive number.");
+        }
+        if (film.getDescription() != null && film.getDescription().length() > 200) {
+            throw new ValidationException("String length can't exceed 200 characters.");
+        }
 
-    public Genre getGenreById(int id) {
-        return filmStorage.getGenreById(id);
-    }
+        Set<Integer> validMpaIds = filmStorage.findAllMpa().stream()
+                .map(Mpa::getId)
+                .collect(Collectors.toSet());
 
-    public List<Mpa> findAllMpa() {
-        return filmStorage.findAllMpa();
-    }
+        if (film.getMpa() == null || !validMpaIds.contains(film.getMpa().getId())) {
+            throw new NotFoundException("Invalid or missing MPA rating");
+        }
+        Set<Integer> validGenreIds = filmStorage.getAllGenres().stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
 
-    public Mpa findMpa(int id) {
-        return filmStorage.findMpa(id);
+        if (film.getGenres() != null && !validGenreIds.containsAll(film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()))) {
+            throw new NotFoundException("Invalid or missing genre");
+        }
     }
 }

@@ -1,13 +1,11 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -32,12 +30,12 @@ public class DbFilmStorage implements FilmStorage {
 
     private static final String GET_ALL = """
             SELECT f.*,
-            m.id AS mpa_id, m.name AS mpa_name,
-            g.id AS genre_id, g.name AS genre_name
+                   m.id AS mpa_id, m.name AS mpa_name,
+                   g.id AS genre_id, g.name AS genre_name
             FROM film f
             LEFT JOIN MPA m ON f.mpa_id = m.id
             LEFT JOIN films_genres fg ON f.id = fg.film_id
-            LEFT JOIN genres g ON fg.genre_id = g.id;
+            LEFT JOIN genres g ON fg.genre_id = g.id
             """;
 
     private static final String INSERT = """
@@ -61,12 +59,6 @@ public class DbFilmStorage implements FilmStorage {
     private static final String DELETE_FILM_GENRES = """
             DELETE FROM films_genres WHERE film_id = ?
             """;
-
-    private static final String GET_FILM_GENRES = """
-             SELECT g.id, g.name FROM films_genres fg
-             JOIN genres g ON fg.genre_id = g.id
-             WHERE fg.film_id = ?
-             """;
 
     private static final String ADD_LIKE = """
             MERGE INTO likes USING (VALUES (?, ?)) AS v(user_id, film_id)
@@ -112,17 +104,6 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-        if (film.getMpa() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "MPA не может быть null");
-        }
-
-        findMpa(film.getMpa().getId());
-
-        if (film.getGenres() != null) {
-            for (Genre genre : film.getGenres()) {
-                getGenreById(genre.getId());
-            }
-        }
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -135,10 +116,6 @@ public class DbFilmStorage implements FilmStorage {
             return stmt;
         }, keyHolder);
 
-        if (keyHolder.getKey() == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка при создании фильма");
-        }
-
         long filmId = keyHolder.getKey().longValue();
         film.setId(filmId);
 
@@ -147,14 +124,10 @@ public class DbFilmStorage implements FilmStorage {
         return getById(filmId);
     }
 
+
     @Override
     public Film getById(long id) {
         Film film = jdbcTemplate.query(GET_BY_ID, getFilmMapper(), id).stream().findFirst().orElse(null);
-
-        if (film == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден, id=" + id);
-        }
-
         film.setGenres(loadGenresForFilm(film.getId()));
 
         return film;
@@ -162,26 +135,11 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public List<Film> getAll() {
-        List<Film> films = jdbcTemplate.query(GET_ALL, getFilmMapper());
-        for (Film film : films) {
-            film.setGenres(new LinkedHashSet<>(getGenresByFilmId(film.getId())));
-        }
-        return films;
+        return jdbcTemplate.query(GET_ALL, getFilmMapper());
     }
 
     @Override
     public Film update(Film entity) {
-        if (entity.getMpa() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "MPA не может быть null");
-        }
-
-        findMpa(entity.getMpa().getId());
-
-        if (entity.getGenres() != null) {
-            for (Genre genre : entity.getGenres()) {
-                getGenreById(genre.getId());
-            }
-        }
         int rowsUpdated = jdbcTemplate.update(UPDATE,
                 entity.getName(),
                 entity.getDescription(),
@@ -189,10 +147,6 @@ public class DbFilmStorage implements FilmStorage {
                 entity.getDuration(),
                 entity.getMpa().getId(),
                 entity.getId());
-
-        if (rowsUpdated == 0) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм не найден, id=" + entity.getId());
-        }
 
         jdbcTemplate.update(DELETE_FILM_GENRES, entity.getId());
         insertFilmGenres(entity.getId(), new ArrayList<>(entity.getGenres()));
@@ -224,9 +178,7 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Genre getGenreById(int id) {
-        return jdbcTemplate.query(GET_GENRE_BY_ID, getGenreMapper(), id)
-                .stream().findFirst().orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Не найден жанр id=" + id));
+        return jdbcTemplate.query(GET_GENRE_BY_ID, getGenreMapper(), id).stream().findFirst().orElse(null);
     }
 
     @Override
@@ -236,9 +188,8 @@ public class DbFilmStorage implements FilmStorage {
 
     @Override
     public Mpa findMpa(int id) {
-        return jdbcTemplate.query(GET_MPA_BY_ID, getMpaMapper(), id)
-                .stream().findFirst().orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Не найден рейтинг id=" + id));
+        Mpa mpa = jdbcTemplate.query(GET_MPA_BY_ID, getMpaMapper(), id).stream().findFirst().orElse(null);
+        return mpa;
     }
 
     private static RowMapper<Film> getFilmMapper() {
@@ -282,10 +233,6 @@ public class DbFilmStorage implements FilmStorage {
             mpa.setName(Objects.requireNonNullElse(resultSet.getString("name"), "Неизвестный рейтинг"));
             return mpa;
         };
-    }
-
-    private List<Genre> getGenresByFilmId(long filmId) {
-        return jdbcTemplate.query(GET_FILM_GENRES, getGenreMapper(), filmId);
     }
 
     private void insertFilmGenres(long filmId, List<Genre> genres) {

@@ -1,15 +1,12 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
 import org.springframework.context.annotation.Primary;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.sql.PreparedStatement;
@@ -78,9 +75,6 @@ public class DbUserStorage implements UserStorage {
         }, keyHolder);
 
         Number key = keyHolder.getKey();
-        if (key == null) {
-            throw new RuntimeException("Ошибка при создании пользователя: не удалось получить ID");
-        }
 
         return entity.setId(key.longValue());
     }
@@ -90,7 +84,7 @@ public class DbUserStorage implements UserStorage {
         try {
             return jdbcTemplate.queryForObject(GET_BY_ID, getUserMapper(), id);
         } catch (EmptyResultDataAccessException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            return null;
         }
     }
 
@@ -112,48 +106,22 @@ public class DbUserStorage implements UserStorage {
 
     @Override
     public void addFriend(Long userId, Long friendId) {
-        try {
-            getById(friendId);
-            getById(userId);
-            jdbcTemplate.update(ADD_FRIEND, userId, friendId);
-        } catch (ResponseStatusException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Один из пользователей не найден");
-        }
+        jdbcTemplate.update(ADD_FRIEND, userId, friendId);
     }
 
     @Override
     public void removeFriend(Long userId, Long friendId) {
-        try {
-            int rowsAffected = jdbcTemplate.update(DELETE_FRIEND, userId, friendId);
-            if (rowsAffected == 0) {
-                return;
-            }
-        } catch (DataAccessException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Database error while removing friend", e);
-        }
+        jdbcTemplate.update(DELETE_FRIEND, userId, friendId);
     }
 
     @Override
     public Collection<User> getUserFriends(Long userId) {
-        try {
-            getById(userId);
-            return jdbcTemplate.query(GET_USER_FRIENDS, getUserMapper(), userId);
-        } catch (ResponseStatusException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
+        return jdbcTemplate.query(GET_USER_FRIENDS, getUserMapper(), userId);
     }
 
     @Override
     public Collection<User> getCommonFriends(Long userId, Long friendId) {
-        try {
-            getById(userId);
-            getById(friendId);
-            return jdbcTemplate.query(GET_COMMON_FRIENDS, getUserMapper(), userId, friendId);
-        } catch (ResponseStatusException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Один из пользователей не найден");
-        } catch (EmptyResultDataAccessException e) {
-            return List.of();
-        }
+        return jdbcTemplate.query(GET_COMMON_FRIENDS, getUserMapper(), userId, friendId);
     }
 
     private static RowMapper<User> getUserMapper() {

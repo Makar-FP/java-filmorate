@@ -20,6 +20,31 @@ public class User {
     LocalDate birthday = LocalDate.of(1990, 1, 1);
     private Set<Long> friends = new HashSet<>();
 
+    public User setId(Long id) {
+        this.id = id;
+        return this;
+    }
+
+    public User setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public User setLogin(String login) {
+        this.login = login;
+        return this;
+    }
+
+    public User setEmail(String email) {
+        this.email = email;
+        return this;
+    }
+
+    public User setBirthday(LocalDate birthday) {
+        this.birthday = birthday;
+        return this;
+    }
+
     public Set<Long> getFriends() {
         return new HashSet<>(friends);
     }
